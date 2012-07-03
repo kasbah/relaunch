@@ -3,24 +3,28 @@
 
 #include <jack/jack.h>
 #include <jack/midiport.h>
-
+#include <jack/ringbuffer.h>
 
 class jackAudio {
 	public:
-	jackAudio();
+	jackAudio(jack_ringbuffer_t*);
 	~jackAudio();
 
-	jack_client_t* client;
+	int activate();
+	int close();
 
+	private:
+	jack_client_t* client;
 	jack_port_t* fromLP_midiIn;
 	jack_port_t* toLP_midiOut;
 	jack_port_t* general_midiOut;
-
 	jack_nframes_t sample_rate;
+	jack_ringbuffer_t* rb;
 
 	static int _process(jack_nframes_t nframes, void* arg);
 	int process(jack_nframes_t nframes);
 
 };
+	
 
 #endif
