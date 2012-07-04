@@ -1,11 +1,53 @@
 #include "jackAudio.h"
 #include <iostream>
-#include <list>
-#include <cstring>
 using namespace std;
 
-jackAudio::jackAudio(jack_ringbuffer_t* ringbuffer)
-	:rb(ringbuffer)
+int jackAudio::_process(jack_nframes_t nframes, void* arg) 
+{
+	return static_cast<jackAudio*> (arg)->process(nframes);
+}
+
+int jackAudio::process(jack_nframes_t nframes)
+{
+	void * midiInPortBuf = jack_port_get_buffer (midiIn, nframes);
+	void * toLP_midiOutPortBuf = jack_port_get_buffer (toLP_midiOut, nframes);
+	void * general_midiOutPortBuf = jack_port_get_buffer (general_midiOut, nframes);
+
+
+	//jack_midi_clear_buffer(toLP_midiOutPortBuf);	
+	//jack_midi_clear_buffer(general_midiOutPortBuf);	
+	jack_midi_event_t* midi_event;
+
+	uint32_t num_of_in_events = jack_midi_get_event_count(midiInPortBuf);
+	if (num_of_in_events != 0) 
+	{
+	
+		for (int i = 0; i < num_of_in_events; ++i)
+		{
+			jack_midi_event_t * midi_event = new jack_midi_event_t;
+			if(jack_midi_event_get(midi_event, midiInPortBuf, i) == 0)
+			{
+				jack_ringbuffer_write(midi_in_rb, (*midi_event).buffer, MIDI_DATA_SIZE); // need -fpermissive to cast buffer to (const char*)
+			}
+		}
+	}
+
+	//cout << jack_ringbuffer_read_space(seq_rb) << endl;
+	if(jack_ringbuffer_read_space(seq_rb) >= 64)
+	{
+		uint8_t seq[8] = {0,0,0,0,0,0,0,0};
+		//jack_ringbuffer_read(seq_rb, seq, 64);	
+		for(int i = 0; i < 8; ++i)
+		{
+			//cout << "in process seq: " << i << " is " << (unsigned int)seq[i] << endl;
+		}
+	}
+
+	return 0;
+}
+
+jackAudio::jackAudio(jack_ringbuffer_t* midiInRB, jack_ringbuffer_t* seqRB)
+	:midi_in_rb(midiInRB), seq_rb(seqRB)
 {
   client = jack_client_open (
 	                             "launchSequencer",
@@ -43,7 +85,7 @@ jackAudio::jackAudio(jack_ringbuffer_t* ringbuffer)
 	                                        JackPortIsOutput,
 	                                        0
 	                                                                 );
-	jack_ringbuffer_free(rb);
+	jack_ringbuffer_free(midi_in_rb);
 }
 
 
@@ -78,40 +120,3 @@ jackAudio::~jackAudio()
 		cerr << "ERROR: jackAudio client does not exist and cannot be closed" << endl;
 }
 
-int jackAudio::_process(jack_nframes_t nframes, void* arg) 
-{
-	return static_cast<jackAudio*> (arg)->process(nframes);
-}
-
-int jackAudio::process(jack_nframes_t nframes)
-{
-	void * midiInPortBuf = jack_port_get_buffer (midiIn, nframes);
-	void * toLP_midiOutPortBuf = jack_port_get_buffer (toLP_midiOut, nframes);
-	void * general_midiOutPortBuf = jack_port_get_buffer (general_midiOut, nframes);
-
-
-	//jack_midi_clear_buffer(toLP_midiOutPortBuf);	
-	//jack_midi_clear_buffer(general_midiOutPortBuf);	
-	jack_midi_event_t* midi_event;
-
-	uint32_t num_of_in_events = jack_midi_get_event_count(midiInPortBuf);
-	//if (num_of_in_events != 0) 
-	{
-	
-		for (int i = 0; i < num_of_in_events; ++i)
-		{
-			jack_midi_event_t * midi_event = new jack_midi_event_t;
-			if(jack_midi_event_get(midi_event, midiInPortBuf, i) == 0)
-			{
-				//cout << "size: " << sizeof(jack_midi_event_t) << endl;
-				//cout << "in val: " << (*midi_event).buffer[2] << endl;
-				//char buffer[sizeof(jack_midi_event_t)];
-				//memcpy(buffer, (*midi_event).buffer, 3);
-				//jack_ringbuffer_write(rb, buffer, 3);
-				//reinterpret_cast<char*>((*midi_event).buffer);
-				jack_ringbuffer_write(rb, (*midi_event).buffer, 3); // need -fpermissive to cast buffer to (const char*)
-			}
-		}
-	}
-	return 0;
-}
