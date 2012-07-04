@@ -14,34 +14,38 @@ jackAudio::jackAudio(jack_ringbuffer_t* ringbuffer)
 	                             0 
 	                                                   );
 	if (client == NULL)
+	{
 		cerr << "ERROR: jack client open failed" << endl;
+		return;
+	}
 
 	sample_rate = jack_get_sample_rate(client);
 	jack_set_process_callback  (client, _process , this);
 
-	fromLP_midiIn = jack_port_register   (
+	midiIn =          jack_port_register (
 	                                        client,
-	                                        "from_LP_out",
+	                                        "midi_in",
 	                                        JACK_DEFAULT_MIDI_TYPE,
 	                                        JackPortIsInput,
 	                                        0
 	                                                                 );
-	toLP_midiOut = jack_port_register    (
+	toLP_midiOut =    jack_port_register (
 	                                        client,
-	                                        "to_LP_out",
+	                                        "to_LP_midi_out",
 	                                        JACK_DEFAULT_MIDI_TYPE,
 	                                        JackPortIsOutput,
 	                                        0
 	                                                                 );
 	general_midiOut = jack_port_register (
 	                                        client,
-	                                        "general_out",
+	                                        "general_midi_out",
 	                                        JACK_DEFAULT_MIDI_TYPE,
 	                                        JackPortIsOutput,
 	                                        0
 	                                                                 );
 	jack_ringbuffer_free(rb);
 }
+
 
 int jackAudio::activate()
 {
@@ -68,7 +72,10 @@ int jackAudio::close()
 jackAudio::~jackAudio()
 {
 	cerr << "jackAudio destructor called" << endl;
-	close();
+	if (client != NULL)
+		close();
+	else
+		cerr << "ERROR: jackAudio client does not exist and cannot be closed" << endl;
 }
 
 int jackAudio::_process(jack_nframes_t nframes, void* arg) 
@@ -78,31 +85,31 @@ int jackAudio::_process(jack_nframes_t nframes, void* arg)
 
 int jackAudio::process(jack_nframes_t nframes)
 {
-	void * fromLP_midiInPortBuf = jack_port_get_buffer (fromLP_midiIn, nframes);
+	void * midiInPortBuf = jack_port_get_buffer (midiIn, nframes);
 	void * toLP_midiOutPortBuf = jack_port_get_buffer (toLP_midiOut, nframes);
 	void * general_midiOutPortBuf = jack_port_get_buffer (general_midiOut, nframes);
 
-	list<jack_midi_event_t*> midi_event_list;
 
 	//jack_midi_clear_buffer(toLP_midiOutPortBuf);	
 	//jack_midi_clear_buffer(general_midiOutPortBuf);	
 	jack_midi_event_t* midi_event;
 
-	uint32_t num_of_in_events = jack_midi_get_event_count(fromLP_midiInPortBuf);
-	if (num_of_in_events != 0) 
+	uint32_t num_of_in_events = jack_midi_get_event_count(midiInPortBuf);
+	//if (num_of_in_events != 0) 
 	{
 	
 		for (int i = 0; i < num_of_in_events; ++i)
 		{
-			jack_midi_event_t * midi_event;
-			midi_event_list.push_back(midi_event);
-			if(jack_midi_event_get(midi_event, fromLP_midiInPortBuf, i) == 0)
+			jack_midi_event_t * midi_event = new jack_midi_event_t;
+			if(jack_midi_event_get(midi_event, midiInPortBuf, i) == 0)
 			{
 				//cout << "size: " << sizeof(jack_midi_event_t) << endl;
-				cout << "in note on: " << ((*midi_event).buffer[0] == 0x80) << endl;
-				char buffer[sizeof(jack_midi_event_t)];
-				memcpy(buffer, midi_event, sizeof(jack_midi_event_t));
-				jack_ringbuffer_write(rb, buffer, sizeof(jack_midi_event_t));
+				//cout << "in val: " << (*midi_event).buffer[2] << endl;
+				//char buffer[sizeof(jack_midi_event_t)];
+				//memcpy(buffer, (*midi_event).buffer, 3);
+				//jack_ringbuffer_write(rb, buffer, 3);
+				//reinterpret_cast<char*>((*midi_event).buffer);
+				jack_ringbuffer_write(rb, (*midi_event).buffer, 3); // need -fpermissive to cast buffer to (const char*)
 			}
 		}
 	}

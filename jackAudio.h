@@ -9,13 +9,13 @@ class jackAudio {
 	public:
 	jackAudio(jack_ringbuffer_t*);
 	~jackAudio();
+	jack_client_t* client;
 
 	int activate();
 	int close();
 
 	private:
-	jack_client_t* client;
-	jack_port_t* fromLP_midiIn;
+	jack_port_t* midiIn;
 	jack_port_t* toLP_midiOut;
 	jack_port_t* general_midiOut;
 	jack_nframes_t sample_rate;
