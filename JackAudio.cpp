@@ -27,7 +27,7 @@ int JackAudio::process(jack_nframes_t nframes)
 			jack_midi_event_t * midi_event = new jack_midi_event_t;
 			if(jack_midi_event_get(midi_event, midiInPortBuf, i) == 0)
 			{
-				engine->queue_event(midi_event);
+				engine->queue_event(midi_event->buffer);
 				//jack_ringbuffer_write(midi_in_rb, (*midi_event).buffer, MIDI_DATA_SIZE); // need -fpermissive to cast buffer to (const char*)
 			}
 		}
