@@ -32,10 +32,15 @@ int JackAudio::process(jack_nframes_t nframes)
 	}
 
 	//write any out-events to the appropriate port
-	jack_midi_data_t * out_data = new jack_midi_data_t;
-	if( engine->read_data(out_data) == 0)
+	jack_midi_data_t out_data_g[3];// = new jack_midi_data_t;
+	if( engine->read_data_for_general(out_data_g) == 0)
 	{
-		jack_midi_event_write(toLP_midiOutPortBuf, 0, out_data, 3);
+		jack_midi_event_write(general_midiOutPortBuf, 0, out_data_g, 3);
+	}
+	jack_midi_data_t out_data_lp[3];// = new jack_midi_data_t;
+	if( engine->read_data_for_LP(out_data_lp) == 0)
+	{
+		jack_midi_event_write(toLP_midiOutPortBuf, 0, out_data_lp, 3);
 	}
 
 	return 0;
@@ -108,11 +113,6 @@ int JackAudio::close()
 JackAudio::~JackAudio()
 {
 	cerr << "JackAudio destructor called" << endl;
-	//jack_midi_data_t out_data[3];
-	//out_data[0] = LP::RESET >> 16;
-	//out_data[1] = 0; 
-	//out_data[2] = 0; 
-	//jack_midi_event_write(toLP_midiOutPortBuf, 0, out_data, 3);
 	if (client != NULL)
 		close();
 	else
