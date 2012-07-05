@@ -3,6 +3,7 @@
 #include "Engine.h"
 #include <iostream>
 #include <signal.h>
+//#include <unistd.h>
 //#include <vector>
 using namespace std;
 
@@ -43,6 +44,8 @@ int main()
 static void signal_handler(int sig)
 {
 	cout <<  endl << "exiting .." << endl;
+	engine.reset_LP();
+
 	//jack_audio.close();
 	exit(0); //class destructors will be called if they are global
 }

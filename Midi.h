@@ -6,8 +6,9 @@ namespace MIDI {
 	enum type {
 		NOTE_ON  = 0x90,
 		NOTE_OFF = 0x80,
+		CC       = 0xB0,
 		START    = 0xFA,
-		TICK     = 0XF0
+		TICK     = 0xF8
 	};
 
 }

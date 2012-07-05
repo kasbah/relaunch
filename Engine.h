@@ -3,7 +3,7 @@
 
 #include <jack/jack.h>
 #include <jack/midiport.h>
-//#include <bitset>
+#include <bitset>
 #include "ringbuffer.h"
 //#include <jack/ringbuffer.h>
 //#include "LaunchPad.h"
@@ -25,6 +25,7 @@ class Engine {
 		void check_write_space();
 		void queue_event(jack_midi_data_t*);
 		int read_data(jack_midi_data_t*);
+		void reset_LP();
 		//void queue_event(jack_midi_event_t*);
 		RingBuffer<jack_midi_data_t> * midi_in_rb;
 		RingBuffer<jack_midi_data_t> * midi_out_rb;
@@ -33,7 +34,7 @@ class Engine {
 		int column;
 		int ticks;
 		int page;
-		//bitset<PAGE_SIZE> sequence;
+		bitset<NUMBER_OF_ROWS * NUMBER_OF_COLUMNS> sequence_page;
 		//bitset<PAGE_SIZE> prev_sequence;
 
 };

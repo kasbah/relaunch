@@ -1,4 +1,5 @@
 #include "JackAudio.h"
+//#include "LaunchPad.h"
 #include <iostream>
 using namespace std;
 
@@ -29,7 +30,8 @@ int JackAudio::process(jack_nframes_t nframes)
 			engine->queue_event(midi_event->buffer);
 		}
 	}
-	//write any out events to the appropriate port
+
+	//write any out-events to the appropriate port
 	jack_midi_data_t * out_data = new jack_midi_data_t;
 	if( engine->read_data(out_data) == 0)
 	{
@@ -106,6 +108,11 @@ int JackAudio::close()
 JackAudio::~JackAudio()
 {
 	cerr << "JackAudio destructor called" << endl;
+	//jack_midi_data_t out_data[3];
+	//out_data[0] = LP::RESET >> 16;
+	//out_data[1] = 0; 
+	//out_data[2] = 0; 
+	//jack_midi_event_write(toLP_midiOutPortBuf, 0, out_data, 3);
 	if (client != NULL)
 		close();
 	else
