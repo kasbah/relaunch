@@ -70,7 +70,7 @@ void Engine::run()
 			if (buffer[0] == MIDI::TICK)
 			{
 				++ticks;
-				if (ticks > TICKS_PER_COLUMN)
+				if (ticks >= TICKS_PER_COLUMN)
 				{
 					ticks = 0;
 
