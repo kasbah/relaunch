@@ -10,7 +10,7 @@
 Engine::Engine()
 {
 	column = 0;
-	ticks = 0;
+	ticks = TICKS_PER_COLUMN - 1;
 	page = 0;
 	//for (int i = 0; i < ROWS; ++i)
 	//{
@@ -44,7 +44,7 @@ inline int Engine::send_to_general(uint8_t row, bool on)
 {
 	jack_midi_data_t data[3]; 
 	data[0] = on ? MIDI::NOTE_ON : MIDI::NOTE_OFF;
-	data[1] = 60 + SCALE::major[row];
+	data[1] = 60 + SCALE::major[7 - row];
 	data[2] = on ? 127 : 0;
 	midi_out_rb->write(data, MIDI_DATA_SIZE);
 	return 0;
@@ -66,8 +66,15 @@ void Engine::run()
 			{
 				buffer[0] = MIDI::NOTE_ON;
 			}
+			
+			if (buffer[0] == MIDI::START)
+			{
+				ticks = TICKS_PER_COLUMN - 1;
+				column = 8;
+				page = 0;
+			}
 
-			if (buffer[0] == MIDI::TICK)
+			if (buffer[0] == MIDI::TICK || buffer[0] == MIDI::START)
 			{
 				++ticks;
 				if (ticks >= TICKS_PER_COLUMN)
@@ -115,12 +122,6 @@ void Engine::run()
 
 					}
 				}
-			}
-			else if (buffer[0] == MIDI::START)
-			{
-				ticks = 0;
-				column = 0;
-				page = 0;
 			}
 			for (int i = 0; i < ROWS; ++i)
 			{

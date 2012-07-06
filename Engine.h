@@ -13,7 +13,7 @@
 #define MAX_RB_DATA 1024
 #define COLUMNS 8
 #define ROWS 8
-#define TICKS_PER_COLUMN 12 
+#define TICKS_PER_COLUMN 6 
 
 using namespace std;
 
