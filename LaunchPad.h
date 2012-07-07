@@ -22,8 +22,9 @@ namespace LP {
 
 	enum modifiers {
 		BLINK = 0b110011,
-		RESET = 0xB0,
 	};
+
+	const uint8_t reset[3] = {0xB0, 0, 0};
 
 	const uint8_t coordToMidi[9][9][2] = { 
 		{{176, 104}, {176, 105}, {176, 106}, {176, 107}, {176, 108}, {176, 109}, {176, 110}, {176, 111}, {  0,   0}},

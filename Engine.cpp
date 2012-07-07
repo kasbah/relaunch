@@ -164,11 +164,7 @@ void Engine::queue_event(jack_midi_data_t* data)
 void Engine::reset_LP()
 {
 	//midi_out_to_LP_rb->reset();
-	jack_midi_data_t data[3];
-	data[0] = LP::RESET;
-	data[1] = 0;
-	data[2] = 0;
-	midi_out_to_LP_rb->write(data, MIDI_DATA_SIZE);
+	midi_out_to_LP_rb->write(LP::reset, MIDI_DATA_SIZE);
 	cout << "resetting LaunchPad" << endl;
 	sleep(1);
 }
