@@ -32,15 +32,16 @@ int JackAudio::process(jack_nframes_t nframes)
 	}
 
 	//write any out-events to the appropriate port
-	jack_midi_data_t out_data_g[3];// = new jack_midi_data_t;
-	if( engine->read_data_for_general(out_data_g) == 0)
+	jack_midi_data_t out_data[3];// = new jack_midi_data_t;
+	int i = 0;
+	while ( engine->read_data_for_general(out_data) == 0)
 	{
-		jack_midi_event_write(general_midiOutPortBuf, 0, out_data_g, 3);
+		jack_midi_event_write(general_midiOutPortBuf, i++, out_data, MIDI_DATA_SIZE);
 	}
-	jack_midi_data_t out_data_lp[3];// = new jack_midi_data_t;
-	if( engine->read_data_for_LP(out_data_lp) == 0)
+	i = 0;
+	while ( engine->read_data_for_LP(out_data) == 0)
 	{
-		jack_midi_event_write(toLP_midiOutPortBuf, 0, out_data_lp, 3);
+		jack_midi_event_write(toLP_midiOutPortBuf, i++, out_data, MIDI_DATA_SIZE);
 	}
 
 	return 0;
@@ -71,16 +72,16 @@ JackAudio::JackAudio(Engine* e)
 	                                        JackPortIsInput,
 	                                        0
 	                                                                 );
-	toLP_midiOut =    jack_port_register (
+	general_midiOut = jack_port_register (
 	                                        client,
-	                                        "to_LP_midi_out",
+	                                        "midi_out",
 	                                        JACK_DEFAULT_MIDI_TYPE,
 	                                        JackPortIsOutput,
 	                                        0
 	                                                                 );
-	general_midiOut = jack_port_register (
+	toLP_midiOut =    jack_port_register (
 	                                        client,
-	                                        "general_midi_out",
+	                                        "midi_out_to_LP",
 	                                        JACK_DEFAULT_MIDI_TYPE,
 	                                        JackPortIsOutput,
 	                                        0
