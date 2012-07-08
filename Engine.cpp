@@ -1,5 +1,4 @@
 #include "Engine.h"
-#include "Midi.h"
 #include "LaunchPad.h"
 #include "Scales.h"
 #include <unistd.h>
@@ -40,13 +39,41 @@ inline int Engine::send_to_LP(uint8_t row, uint8_t column, uint8_t colour)
 	return 0;
 }
 
-inline int Engine::send_to_general(uint8_t row, bool on)
+inline int Engine::send_to_general(uint8_t row, uint8_t type)
 {
 	jack_midi_data_t data[3]; 
-	data[0] = on ? MIDI::NOTE_ON : MIDI::NOTE_OFF;
+	data[0] = type; //on ? MIDI::NOTE_ON : MIDI::NOTE_OFF;
 	data[1] = 60 + SCALE::major[7 - row];
-	data[2] = on ? 127 : 0;
+	data[2] = (type==MIDI::NOTE_ON) ? 127 : 0;
+	//send and delete noteoff now if one is queued for this note
+	if (type == MIDI::NOTE_ON)
+	{
+		MidiOutEvent event(MIDI::NOTE_OFF, data[1], 0);
+		list<MidiOutEvent>::iterator it = out_queue.begin();
+		list<MidiOutEvent>::iterator tmpit;// tmpit = it;
+		while (it != out_queue.end())
+		{
+			tmpit = it;
+			++it;
+			if(event == (*tmpit))
+			{
+				midi_out_rb->write((*tmpit).data, MIDI_DATA_SIZE);
+				out_queue.erase(tmpit);
+			}
+		}
+	}
 	midi_out_rb->write(data, MIDI_DATA_SIZE);
+	return 0;
+}
+
+inline int Engine::send_later(uint8_t row, uint8_t type, int offset)
+{
+	jack_midi_data_t data[3]; 
+	data[0] = type; //on ? MIDI::NOTE_ON : MIDI::NOTE_OFF;
+	data[1] = 60 + SCALE::major[7 - row];
+	data[2] = (type==MIDI::NOTE_ON) ? 127 : 0;
+	MidiOutEvent event(data, offset);
+	out_queue.push_back(event);
 	return 0;
 }
 
@@ -56,8 +83,7 @@ void Engine::run()
 	while (1)
 	{
 		usleep(100);
-		size_t read_space = midi_in_rb->read_space();
-		if(read_space > 0)
+		if(midi_in_rb->read_space() > 0)
 		{
 			jack_midi_data_t buffer[MIDI_DATA_SIZE];
 			midi_in_rb->read(buffer, MIDI_DATA_SIZE);
@@ -77,6 +103,23 @@ void Engine::run()
 			if (buffer[0] == MIDI::TICK || buffer[0] == MIDI::START)
 			{
 				++ticks;
+				//decrement the offsets in the out queue by one tick until they hit zero
+				//if they do send and delete them
+				if(!out_queue.empty())
+				{
+					list<MidiOutEvent>::iterator it = out_queue.begin();
+					list<MidiOutEvent>::iterator tmpit;// tmpit = it;
+					while (it != out_queue.end())
+					{
+						tmpit = it;
+						++it;
+						if(--((*tmpit).offset) <= 0)
+						{
+							midi_out_rb->write((*tmpit).data, MIDI_DATA_SIZE);
+							out_queue.erase(tmpit);
+						}
+					}
+				}
 				if (ticks >= TICKS_PER_COLUMN)
 				{
 					ticks = 0;
@@ -84,11 +127,6 @@ void Engine::run()
 					//update at the old position of cursor
 					for (int i = 0; i < ROWS; ++i)
 					{
-						//jack_midi_data_t data[3]; 
-						//data[0] = LP::coordToMidi[i+1][column][0];
-						//data[1] = LP::coordToMidi[i+1][column][1];
-						//data[2] = sequence_page[i * COLUMNS + column] ? LP::GREEN_FULL : LP::OFF;
-						//midi_out_to_LP_rb->write(data, MIDI_DATA_SIZE);
 						if (sequence_page[i * COLUMNS + column])
 						{
 							send_to_LP (i+1, column, LP::GREEN_FULL); 
@@ -106,16 +144,11 @@ void Engine::run()
 					//update at the new position of cursor
 					for (int i = 0; i < ROWS; ++i)
 					{
-						//jack_midi_data_t data[3]; 
-						//data[0] = LP::coordToMidi[i+1][column][0];
-						//data[1] = LP::coordToMidi[i+1][column][1];
-						//data[2] = sequence_page[i * COLUMNS + column] ? LP::AMBER_FULL : LP::RED_FULL;
-						//midi_out_to_LP_rb->write(data, MIDI_DATA_SIZE);
 						if (sequence_page[i * COLUMNS + column])
 						{
 							send_to_LP (i+1, column, LP::AMBER_FULL); 
-							send_to_general(i, true);
-							send_to_general(i, false);
+							send_to_general(i, MIDI::NOTE_ON);
+							send_later(i, MIDI::NOTE_OFF, 24);
 						}
 						else
 							send_to_LP (i+1, column, LP::RED_FULL); 
@@ -155,9 +188,6 @@ void Engine::run()
 }
 void Engine::queue_event(jack_midi_data_t* data)
 {
-	//cout << "write space:" << jack_ringbuffer_write_space(midi_in_rb) << endl;
-	//jack_ringbuffer_write(midi_in_rb, (*event).buffer, MIDI_DATA_SIZE);
-	//cout << "in write space:" << midi_in_rb->write_space() << endl;
 	midi_in_rb->write(data, MIDI_DATA_SIZE);
 }
 
@@ -187,14 +217,6 @@ int Engine::read_data_for_general(jack_midi_data_t* data)
 	midi_out_rb->read(data, MIDI_DATA_SIZE);
 	return 0;
 }
-
-//
-//void Engine::queue_event(jack_midi_event_t* event)
-//{
-//	//if(midi_in_rb->write_space() > 0)
-//	//	midi_in_rb->write(&event, 1);
-//}
-
 
 Engine::~Engine()
 {

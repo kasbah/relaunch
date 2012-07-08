@@ -5,7 +5,9 @@
 #include <jack/midiport.h>
 #include <bitset>
 #include <vector>
+#include <list>
 #include "ringbuffer.h"
+#include "Midi.h"
 //#include <jack/ringbuffer.h>
 //#include "LaunchPad.h"
 
@@ -38,7 +40,9 @@ class Engine {
 		int ticks;
 		int page;
 		int send_to_LP(uint8_t row, uint8_t column, uint8_t colour);
-		int send_to_general(uint8_t row, bool on);
+		int send_to_general(uint8_t row, uint8_t type);
+		int send_later(uint8_t row, uint8_t type, int offset);
+		list<MidiOutEvent> out_queue; 
 		bitset<ROWS * COLUMNS> sequence_page;
 		//int8_t display[ROWS][COLUMNS] = {{0}};
 		//bitset<PAGE_SIZE> prev_sequence;
