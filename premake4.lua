@@ -1,8 +1,8 @@
-solution "launchSequencer"
+solution "relaunch"
    configurations { "Debug", "Release" }
-	 links {"jack", "lo"}
+	 links {"jack", "asound", "pthread"}
 
-project "launchSequencer"
+project "relaunch"
   language "C++"
   kind     "ConsoleApp"
   files  { "**.h", "**.cpp" }
@@ -10,7 +10,9 @@ project "launchSequencer"
   configuration { "Debug*" }
     defines { "_DEBUG", "DEBUG" }
     flags   { "Symbols" }
+		buildoptions {"-fpermissive"}
 
   configuration { "Release*" }
     defines { "NDEBUG" }
     flags   { "Optimize" }
+		buildoptions {"-fpermissive"}
