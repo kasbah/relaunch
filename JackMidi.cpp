@@ -48,18 +48,16 @@ JackMidi::JackMidi(Engine* e)
 JackMidi::~JackMidi()
 {
 	cerr << "JackMidi destructor called" << endl;
-	if (client != NULL)
-		close();
-	else
-		cerr << "ERROR: JackMidi client does not exist and cannot be closed" << endl;
+	close();
 }
 
-int JackMidi::exit()
+void JackMidi::close()
 {
-	if (client != NULL)
-		close();
-	else
-		cerr << "ERROR: JackMidi client does not exist and cannot be closed" << endl;
+	cerr << "deactivating and closing jack client" << endl;
+	if((jack_deactivate(client) != 0) || (jack_client_close(client) != 0))
+	{
+		cerr << "ERROR: could not deactivate and/or close jack client" << endl;
+	}
 }
 
 //our arg is this instance, this is a workaround so we can
@@ -106,7 +104,6 @@ int JackMidi::process(jack_nframes_t nframes)
 	return 0;
 }
 
-
 int JackMidi::activate()
 {
 	if (jack_activate(client) != 0)
@@ -116,17 +113,4 @@ int JackMidi::activate()
 	}
 	return 0;
 }
-
-int JackMidi::close()
-{
-	cerr << "deactivating and closing jack client" << endl;
-	if((jack_deactivate(client) != 0) || (jack_client_close(client) != 0))
-	{
-		cerr << "ERROR: could not deactivate and/or close jack client" << endl;
-		return 1;
-	}
-	return 0;
-}
-
-
 

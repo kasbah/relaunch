@@ -13,7 +13,7 @@ class JackMidi
 	public:
 		JackMidi(Engine* e);
 		virtual ~JackMidi();
-		virtual int exit();
+		virtual void close();
 	private:
 		jack_client_t* client;
 		jack_port_t* midiIn;
@@ -22,7 +22,6 @@ class JackMidi
 		static int _process(jack_nframes_t nframes, void* arg);
 		int process(jack_nframes_t nframes);
 		int activate();
-		int close();
 };
 	
 #endif

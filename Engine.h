@@ -1,13 +1,14 @@
 #ifndef __ENGINE_H__
 #define __ENGINE_H__
 
-#include <jack/jack.h>
-#include <jack/midiport.h>
+//#include <jack/jack.h>
+//#include <jack/midiport.h>
 #include <bitset>
 #include <vector>
 #include <list>
 #include "ringbuffer.h"
 #include "Midi.h"
+#include <stdint.h>
 //#include <jack/ringbuffer.h>
 //#include "LaunchPad.h"
 
@@ -25,15 +26,15 @@ class Engine {
 		~Engine();
 		int init();
 		void run();
-		void check_write_space();
-		void queue_event(jack_midi_data_t*);
-		int read_data_for_LP(jack_midi_data_t*);
-		int read_data_for_general(jack_midi_data_t*);
+		//void check_write_space();
+		void queue_event(uint8_t*);
+		int read_data_for_LP(uint8_t*);
+		int read_data_for_general(uint8_t*);
 		void reset_LP();
 		//void queue_event(jack_midi_event_t*);
-		RingBuffer<jack_midi_data_t> * midi_in_rb;
-		RingBuffer<jack_midi_data_t> * midi_out_to_LP_rb;
-		RingBuffer<jack_midi_data_t> * midi_out_rb;
+		RingBuffer<uint8_t> * midi_in_rb;
+		RingBuffer<uint8_t> * midi_out_to_LP_rb;
+		RingBuffer<uint8_t> * midi_out_rb;
 		//jack_ringbuffer_t * midi_in_rb;
 	private:
 		int column;

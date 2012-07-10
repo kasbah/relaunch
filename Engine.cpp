@@ -22,16 +22,16 @@ Engine::Engine()
 
 int Engine::init()
 {
-	midi_in_rb = new RingBuffer<jack_midi_data_t>(MAX_RB_DATA);
-	midi_out_to_LP_rb = new RingBuffer<jack_midi_data_t>(MAX_RB_DATA);
-	midi_out_rb = new RingBuffer<jack_midi_data_t>(MAX_RB_DATA);
+	midi_in_rb = new RingBuffer<uint8_t>(MAX_RB_DATA);
+	midi_out_to_LP_rb = new RingBuffer<uint8_t>(MAX_RB_DATA);
+	midi_out_rb = new RingBuffer<uint8_t>(MAX_RB_DATA);
 	//jack_ringbuffer_t * midi_in_rb = jack_ringbuffer_create(1024);
 	//jack_ringbuffer_free(midi_in_rb);
 }
 
 inline int Engine::send_to_LP(uint8_t row, uint8_t column, uint8_t colour)
 {
-	jack_midi_data_t data[3]; 
+	uint8_t data[3]; 
 	data[0] = LP::coordToMidi[row][column][0];
 	data[1] = LP::coordToMidi[row][column][1];
 	data[2] = colour;
@@ -41,7 +41,7 @@ inline int Engine::send_to_LP(uint8_t row, uint8_t column, uint8_t colour)
 
 inline int Engine::send_to_general(uint8_t row, uint8_t type)
 {
-	jack_midi_data_t data[3]; 
+	uint8_t data[3]; 
 	data[0] = type; //on ? MIDI::NOTE_ON : MIDI::NOTE_OFF;
 	data[1] = 60 + SCALE::major[7 - row];
 	data[2] = (type==MIDI::NOTE_ON) ? 127 : 0;
@@ -68,7 +68,7 @@ inline int Engine::send_to_general(uint8_t row, uint8_t type)
 
 inline int Engine::send_later(uint8_t row, uint8_t type, int offset)
 {
-	jack_midi_data_t data[3]; 
+	uint8_t data[3]; 
 	data[0] = type; //on ? MIDI::NOTE_ON : MIDI::NOTE_OFF;
 	data[1] = 60 + SCALE::major[7 - row];
 	data[2] = (type==MIDI::NOTE_ON) ? 127 : 0;
@@ -85,7 +85,7 @@ void Engine::run()
 		usleep(100);
 		if(midi_in_rb->read_space() > 0)
 		{
-			jack_midi_data_t buffer[MIDI_DATA_SIZE];
+			uint8_t buffer[MIDI_DATA_SIZE];
 			midi_in_rb->read(buffer, MIDI_DATA_SIZE);
 
 			if (buffer[0] == MIDI::NOTE_OFF)
@@ -169,7 +169,7 @@ void Engine::run()
 								if (buffer[1] == LP::coordToMidi[i+1][j][1])
 								{
 									sequence_page.flip(i*COLUMNS + j);
-									jack_midi_data_t data[3]; 
+									uint8_t data[3]; 
 									data[0] = buffer[0];
 									data[1] = buffer[1];
 									if (j == column)
@@ -186,7 +186,7 @@ void Engine::run()
 		}
 	}
 }
-void Engine::queue_event(jack_midi_data_t* data)
+void Engine::queue_event(uint8_t* data)
 {
 	midi_in_rb->write(data, MIDI_DATA_SIZE);
 }
@@ -200,7 +200,7 @@ void Engine::reset_LP()
 }
 
 
-int Engine::read_data_for_LP(jack_midi_data_t* data)
+int Engine::read_data_for_LP(uint8_t* data)
 {
 	if (midi_out_to_LP_rb->read_space() < MIDI_DATA_SIZE)
 		return 1;
@@ -209,7 +209,7 @@ int Engine::read_data_for_LP(jack_midi_data_t* data)
 	return 0;
 }
 
-int Engine::read_data_for_general(jack_midi_data_t* data)
+int Engine::read_data_for_general(uint8_t* data)
 {
 	if (midi_out_rb->read_space() < MIDI_DATA_SIZE)
 		return 1;

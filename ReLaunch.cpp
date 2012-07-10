@@ -32,7 +32,7 @@ int main(int argc, char *argv[])
 	//};
 
 //opt = getopt_long(argc, argv, "a", long_options, &longopt_index);
-	opt = getopt(argc, argv, "a");
+	opt = getopt(argc, argv, "j");
 
 	cout << "opt: " << opt << endl;
 
@@ -40,18 +40,17 @@ int main(int argc, char *argv[])
 	{
 		switch (opt)
 		{
-			case 'a':
-				cout << "a option" << endl;
-				driver = new AlsaMidi(&engine);
+			case 'j':
+				driver = new JackMidi(&engine);
 				break;
 			default:
-				driver = new JackMidi(&engine);
+				driver = new AlsaMidi(&engine);
 				break;
 		}
 	}
 	else
 	{
-		driver = new JackMidi(&engine);
+		driver = new AlsaMidi(&engine);
 	}
 
 
@@ -67,6 +66,8 @@ static void signal_handler(int sig)
 {
 	cout << endl << "exiting..." << endl;
 	engine.reset_LP();
-	//driver->exit();
+	//driver->close();
+	delete driver;
+	//delete &engine;
 	exit(0); //class destructors will be called if they are global
 }
